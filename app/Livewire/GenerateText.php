@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Livewire;
 
 use Livewire\Component;
@@ -31,14 +30,14 @@ class GenerateText extends Component
                 'Authorization' => 'Bearer ' . $apiKey,
                 'HTTP-Referer' => env('APP_URL'),
                 'X-Title' => env('APP_NAME'),
-                'max_tokens' => 1000, // Make sure this is enough for your text
-                'temperature' => 0.7,
                 'Content-Type' => 'application/json',
             ])->post($apiEndpoint, [
                 'model' => 'cognitivecomputations/dolphin3.0-r1-mistral-24b:free',
                 'messages' => [
                     ['role' => 'user', 'content' => $fullPrompt]
-                ]
+                ],
+                'max_tokens' => 1000,
+                'temperature' => 0.7,
             ]);
 
             $data = $response->json();
@@ -50,7 +49,6 @@ class GenerateText extends Component
             } else {
                 $this->generatedText = $data['choices'][0]['message']['content'];
             }
-
         } catch (\Exception $e) {
             Log::error('Exception:', ['message' => $e->getMessage()]);
             $this->generatedText = 'Exception: ' . $e->getMessage();
