@@ -4,6 +4,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Client\ConnectionException; // Add this import for ConnectionException
 
 class GenerateText extends Component
 {
@@ -26,7 +27,7 @@ class GenerateText extends Component
         $fullPrompt = $predefinedPrompt . $this->inputText;
 
         try {
-            $response = Http::withHeaders([
+            $response = Http::timeout(30)->withHeaders([ // Added timeout of 30 seconds
                 'Authorization' => 'Bearer ' . $apiKey,
                 'HTTP-Referer' => env('APP_URL'),
                 'X-Title' => env('APP_NAME'),
@@ -36,7 +37,7 @@ class GenerateText extends Component
                 'messages' => [
                     ['role' => 'user', 'content' => $fullPrompt]
                 ],
-                'max_tokens' => 1000,
+                'max_tokens' => 500,
                 'temperature' => 0.7,
             ]);
 
@@ -49,9 +50,12 @@ class GenerateText extends Component
             } else {
                 $this->generatedText = $data['choices'][0]['message']['content'];
             }
-        } catch (\Exception $e) {
+        } catch (ConnectionException $e) { // Specific catch for timeout/connection issues
+            Log::error('API Timeout:', ['message' => $e->getMessage()]);
+            $this->generatedText = 'Request timed out. Try again later.';
+        } catch (\Exception $e) { // General catch for other exceptions
             Log::error('Exception:', ['message' => $e->getMessage()]);
-            $this->generatedText = 'Exception: ' . $e->getMessage();
+            $this->generatedText = 'Error: ' . $e->getMessage();
         }
     }
 
