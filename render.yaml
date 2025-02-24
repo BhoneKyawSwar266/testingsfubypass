@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: laravel-app
+    env: php
+    runtime: php # Explicitly set PHP runtime
+    plan: free # Use Render’s free tier
+    buildCommand: composer install
+    startCommand: php artisan serve --host=0.0.0.0 --port=10000
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_KEY
+        sync: false # Generate or set manually later
+      - key: APP_DEBUG
+        value: true
+      - key: APP_URL
+        value: https://your-app-name.onrender.com # Replace with your Render URL after deployment
+      - key: OPENROUTER_API_KEY
+        value: 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 # Replace with your actual key
+      - key: APP_KEY
+        value: base64:NyZ8AkIEiIz+9sh+jG2L5srxWPI3lyRtV4aZYzQ6zZk= # Your generated key
+      - key: CACHE_DRIVER
+        value: array
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: SESSION_DRIVER
+        value: cookie
