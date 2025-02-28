@@ -4,7 +4,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Client\ConnectionException; // Add this import for ConnectionException
+use Illuminate\Http\Client\ConnectionException;
 
 class GenerateText extends Component
 {
@@ -17,45 +17,57 @@ class GenerateText extends Component
             'inputText' => 'required|string|min:1',
         ]);
 
-        $this->generatedText = ''; // Clear previous result
+        $this->generatedText = ''; 
 
         $apiKey = env('OPENROUTER_API_KEY');
         $apiEndpoint = 'https://openrouter.ai/api/v1/chat/completions';
 
-        $predefinedPrompt = "Rewrite this text to make it sound like a human wrote it, not an AI. Think like a university student: use a mix of formal and casual language, vary your sentence structures, and avoid sounding too perfect. Sometimes start sentences with conjunctions like 'But,' 'And,' or 'So.' Use simple words instead of jargon (e.g., 'use' instead of 'utilize'). Occasionally add a colloquial phrase or a personal touch, but only if it feels natural. The goal is to make the text feel authentic and dodge AI detection.\n\n";
+        $predefinedPrompt = "Rewrite the following text to sound like it was written by a human for an academic audience. Keep a formal tone, but make it simple and easy to read. Avoid long sentences and complex words to prevent detection by AI tools.
+
+To do this, please:
+1. Use short sentences, under 15 words each. And Give a liitle long senteces after 3 to 4 short lines 
+2. Use basic, common words that everyone knows. Avoid big or fancy words unless they're really needed.
+3. Make every sentence clear and simple, with one idea only.
+4. Break up long sentences into shorter ones.
+5. Use active voice to keep it direct.
+6. Add transitions like 'also' or 'next' to connect ideas smoothly.
+7. Change words and phrases so it doesn't sound like AI wrote it.
+8. Keep it formal, but not too complicated or hard to follow.
+9. Give the output from the beginnig of the input text and don't add like that (Here's a rewritten version of the text, following your guidelines:)
+
+Focus on making the text easy to read and understand for a general academic audience.\n\n";
 
         $fullPrompt = $predefinedPrompt . $this->inputText;
 
         try {
-            $response = Http::timeout(30)->withHeaders([ // Added timeout of 30 seconds
+            $response = Http::timeout(30)->withHeaders([
                 'Authorization' => 'Bearer ' . $apiKey,
                 'HTTP-Referer' => env('APP_URL'),
                 'X-Title' => env('APP_NAME'),
                 'Content-Type' => 'application/json',
             ])->post($apiEndpoint, [
-                'model' => 'cognitivecomputations/dolphin3.0-r1-mistral-24b:free',
+                'model' => 'google/gemini-2.0-pro-exp-02-05:free',  // Updated to the new model
                 'messages' => [
                     ['role' => 'user', 'content' => $fullPrompt]
                 ],
-                'max_tokens' => 500,
+                'max_tokens' => 1000,
                 'temperature' => 0.7,
             ]);
-
             $data = $response->json();
-            Log::info('OpenRouter API Response:', $data);
+            Log::info('OpenRouter API Response:', $data ?? ['no_data' => true]);
 
             if (!isset($data['choices'][0]['message']['content'])) {
                 Log::error('Invalid API Response', ['response' => $data]);
-                $this->generatedText = 'Invalid API response.';
+                $this->generatedText = 'Oops, the API gave us something weird. Try again!';
             } else {
                 $this->generatedText = $data['choices'][0]['message']['content'];
             }
-        } catch (ConnectionException $e) { // Specific catch for timeout/connection issues
+        } catch (ConnectionException $e) {
             Log::error('API Timeout:', ['message' => $e->getMessage()]);
-            $this->generatedText = 'Request timed out. Try again later.';
-        } catch (\Exception $e) { // General catch for other exceptions
+            $this->generatedText = 'Request timed out. Give it another shot later!';
+        } catch (\Exception $e) {
             Log::error('Exception:', ['message' => $e->getMessage()]);
-            $this->generatedText = 'Error: ' . $e->getMessage();
+            $this->generatedText = 'Something broke: ' . $e->getMessage();
         }
     }
 

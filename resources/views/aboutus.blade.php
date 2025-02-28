@@ -10,7 +10,6 @@
 </head>
 <body class="h-screen bg-gray-100 flex flex-col">
     @include('header')
-
     <!-- About Us Content -->
     <main class="flex-grow py-12 px-6 bg-gradient-to-b from-white to-gray-100">
         <div class="max-w-4xl mx-auto">
